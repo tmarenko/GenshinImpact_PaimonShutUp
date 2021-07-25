@@ -1,0 +1,5 @@
+numpy==1.18.5
+opencv-python==4.2.0.34
+pillow==8.2.0
+pywin32==228
+pycaw==20181226
