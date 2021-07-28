@@ -52,16 +52,19 @@ class GenshinImpact:
         self.full_width = win32api.GetSystemMetrics(0)
         self.full_height = win32api.GetSystemMetrics(1)
 
+    @property
+    def is_full_screen(self):
+        if self.window and self.window_active:
+            return win32gui.GetForegroundWindow() == self.window
+
     def _find_window(self, hwnd, wildcard):
         """Enumerates over windows to find Genshin Impact process and store info about it."""
         try:
             if "Genshin Impact" == win32gui.GetWindowText(hwnd) and "UnityWndClass" == win32gui.GetClassName(hwnd):
                 self.window = hwnd
-                rect = win32gui.GetWindowRect(hwnd)
-                self.x = rect[0]
-                self.y = rect[1]
-                self.width = rect[2] - rect[0]
-                self.height = rect[3] - rect[1]
+                _, _, _, _, self.position_box = win32gui.GetWindowPlacement(hwnd)
+                self.width = self.position_box[2] - self.position_box[0]
+                self.height = self.position_box[3] - self.position_box[1]
         except pywintypes.error:
             pass
 
@@ -124,13 +127,14 @@ class GenshinImpact:
                 return self.last_frame
             time.sleep(0.01)
         self.screen_locked = True
-        img = ImageGrab.grab(bbox=(0, 0, self.full_width, self.full_height))
+        _, _, _, _, self.position_box = win32gui.GetWindowPlacement(self.window)
+        img = ImageGrab.grab(bbox=self.position_box, all_screens=True)
         self.screen_locked = False
         self.last_frame = img
         return img
 
     def _get_frame(self, rect):
-        if self.width < 500 or self.height < 500:
+        if self.is_full_screen:
             box = (rect[0] * self.full_width, rect[1] * self.full_height,
                    rect[2] * self.full_width, rect[3] * self.full_height)
             frame = self._get_all_screen()
