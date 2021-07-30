@@ -22,7 +22,7 @@ int InitTesseract(const char* dataPath, const char* language) {
 
 void DestroyTesseract() {
     if (tesseractApi) {
-        std::cout << "Destroying Tesseract lib." << std::endl;
+        std::cout << "Destroying Tesseract API." << std::endl;
         tesseractApi->End();
         delete tesseractApi;
     }
@@ -34,10 +34,12 @@ std::string StripText(const std::string &input) {
         return input;
     auto start_it = input.begin();
     auto end_it = input.rbegin();
-    while (std::isspace(*start_it))
+    while (start_it != input.end() && std::isspace(*start_it))
         ++start_it;
-    while (std::isspace(*end_it))
+    while (end_it != input.rend() && std::isspace(*end_it))
         ++end_it;
+    if (start_it > end_it.base())
+        return std::string();
     return std::string(start_it, end_it.base());
 }
 
@@ -70,8 +72,6 @@ unsigned int LevenshteinDistance(const std::string &s1, const std::string &s2) {
 
     for (unsigned int i = 1; i <= len1; ++i)
         for (unsigned int j = 1; j <= len2; ++j)
-            // note that std::min({arg1, arg2, arg3}) works only in C++11,
-            // for C++98 use std::min(std::min(arg1, arg2), arg3)
             d[i][j] = min(min(d[i - 1][j] + 1, d[i][j - 1] + 1),
                           d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1));
     return d[len1][len2];

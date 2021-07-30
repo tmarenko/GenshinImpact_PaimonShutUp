@@ -57,19 +57,19 @@ BOOL CALLBACK EnumWindowsFunc(HWND hwnd, LPARAM lParam) {
 }
 
 
-void FindGenshinWindow(){
-    EnumWindows(EnumWindowsFunc, (LPARAM)(&gwi));
+void FindGenshinWindow() {
+    EnumWindows(EnumWindowsFunc, (LPARAM) (&gwi));
     genshinWindow = gwi.hwnd;
 
     TCHAR buff[1024]{};
     GetWindowText(genshinWindow, buff, 100);
-    if (!lstrcmp(buff, gwi.windowName)){
-        if (!gwi.active){
+    if (!lstrcmp(buff, gwi.windowName)) {
+        if (!gwi.active) {
             gwi.active = true;
             std::cout << "Ready for Paimon!" << std::endl;
         }
-    } else{
-        if (gwi.active){
+    } else {
+        if (gwi.active) {
             gwi.active = false;
             gwi.hwnd = NULL;
             std::cout << "Game was closed" << std::endl;
@@ -131,27 +131,30 @@ std::string GetTextFromImageByRect(const cv::Mat &image, const cv::Rect& rect) {
 
 
 bool IsPaimonSpeaking() {
-    cv::Rect cropDefault = cv::Rect((int) (DEFAULT_DIALOGUE_NAME_POS.val[0] * gwi.width),
-                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[1] * gwi.height),
-                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[2] * gwi.width) - (int) (DEFAULT_DIALOGUE_NAME_POS.val[0] * gwi.width),
-                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[3] * gwi.height) - (int) (DEFAULT_DIALOGUE_NAME_POS.val[1] * gwi.height));
-    cv::Rect cropOut = cv::Rect((int) (OUT_DIALOGUE_NAME_POS.val[0] * gwi.width),
-                                (int) (OUT_DIALOGUE_NAME_POS.val[1] * gwi.height),
-                                (int) (OUT_DIALOGUE_NAME_POS.val[2] * gwi.width) - (int) (OUT_DIALOGUE_NAME_POS.val[0] * gwi.width),
-                                (int) (OUT_DIALOGUE_NAME_POS.val[3] * gwi.height) - (int) (OUT_DIALOGUE_NAME_POS.val[1] * gwi.height));
     GetFrame(gwi.width, gwi.height);
+    if (frame.empty())
+        return false;
+    cv::Rect cropDefault = cv::Rect((int) (DEFAULT_DIALOGUE_NAME_POS.val[0] * frame.cols),
+                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[1] * frame.rows),
+                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[2] * frame.cols) - (int) (DEFAULT_DIALOGUE_NAME_POS.val[0] * frame.cols),
+                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[3] * frame.rows) - (int) (DEFAULT_DIALOGUE_NAME_POS.val[1] * frame.rows));
+    cv::Rect cropOut = cv::Rect((int) (OUT_DIALOGUE_NAME_POS.val[0] * frame.cols),
+                                (int) (OUT_DIALOGUE_NAME_POS.val[1] * frame.rows),
+                                (int) (OUT_DIALOGUE_NAME_POS.val[2] * frame.cols) - (int) (OUT_DIALOGUE_NAME_POS.val[0] * frame.cols),
+                                (int) (OUT_DIALOGUE_NAME_POS.val[3] * frame.rows) - (int) (OUT_DIALOGUE_NAME_POS.val[1] * frame.rows));
     std::string defaultDialogue = GetTextFromImageByRect(frame, cropDefault);
     std::string outDialogue = GetTextFromImageByRect(frame, cropOut);
     return IsStringsSimilar(defaultDialogue, PAIMON_NAME) || IsStringsSimilar(outDialogue, PAIMON_NAME);
 }
 
 
-bool IsGenshinProcess(DWORD pid){
-    TCHAR  buff[1024];
+bool IsGenshinProcess(DWORD pid) {
+    TCHAR buff[1024];
     HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (GetProcessImageFileName(handle, reinterpret_cast<LPSTR>(buff), sizeof(buff))){
-        return ((std::string)buff).find("GenshinImpact.exe") != std::string::npos;
+    if (GetProcessImageFileName(handle, reinterpret_cast<LPSTR>(buff), sizeof(buff))) {
+        return ((std::string) buff).find("GenshinImpact.exe") != std::string::npos;
     }
+    return false;
 }
 
 
@@ -209,34 +212,50 @@ HRESULT SetMuteGenshin(BOOL bMute) {
 }
 
 
-int PaimonShutUp(){
+int PaimonShutUp() {
     if (InitTesseract(NULL, "eng"))
         return 1;
 
     bool paimonWasHere = false;
     std::cout << "Waiting for GenshinImpact.exe process." << std::endl;
-    while (!stop){
+    while (!stop) {
         FindGenshinWindow();
         if (!gwi.active)
             continue;
         bool isPaimonSpeaking = IsPaimonSpeaking();
-        if (isPaimonSpeaking && !paimonWasHere){
+        if (isPaimonSpeaking && !paimonWasHere) {
             paimonWasHere = true;
             std::cout << "Paimon, shut up!" << std::endl;
             SetMuteGenshin(isPaimonSpeaking);
         }
-        if (!isPaimonSpeaking && paimonWasHere){
+        if (!isPaimonSpeaking && paimonWasHere) {
             paimonWasHere = false;
             std::cout << "Unmuting the game." << std::endl;
             SetMuteGenshin(isPaimonSpeaking);
         }
     }
     DestroyTesseract();
+    SetMuteGenshin(false);
     return 0;
 }
 
 
 int main() {
-    signal(SIGINT, keyHand);
-    return PaimonShutUp();
+    try {
+        signal(SIGINT, keyHand);
+        SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
+        return PaimonShutUp();
+    }
+    catch (const std::runtime_error &re) {
+        std::cerr << "Runtime error: " << re.what() << std::endl;
+    }
+    catch (const std::exception &ex) {
+        std::cerr << "Error occurred: " << ex.what() << std::endl;
+    }
+    catch (...) {
+        std::cerr << "Unknown failure occurred. Possible memory corruption" << std::endl;
+    }
+    DestroyTesseract();
+    system("pause");
+    return 1;
 }
