@@ -21,7 +21,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} main.cpp tesseract.cpp tesseract.h)
+add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h)
 
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${Leptonica_LIBRARIES} libtesseract)
