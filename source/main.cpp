@@ -12,8 +12,8 @@
 #define PW_RENDERFULLCONTENT 0x00000002 // Properly capture DirectComposition genshinWindow content
 
 typedef struct GenshinWindowInfo {
-    const char *windowName = "Genshin Impact";
-    const char *windowClass = "UnityWndClass";
+    LPCWSTR windowName = L"Genshin Impact";
+    LPCWSTR windowClass = L"UnityWndClass";
     HWND hwnd = NULL;
     int width = 0;
     int height = 0;
@@ -110,8 +110,9 @@ void GetFrame(int screenWidth, int screenHeight) {
     auto bitMap = CreateCompatibleBitmap(hwndDC, screenWidth, screenHeight);
     SelectObject(saveDC, bitMap);
 
-    PrintWindow(genshinWindow, saveDC, PW_RENDERFULLCONTENT);
-    GetDIBits(saveDC, bitMap, 0, screenHeight - titleBarSize, frame.data, (BITMAPINFO *) &bi, DIB_RGB_COLORS);
+    // GPU-compatible screenshot method
+    BitBlt(saveDC, 0, 0, screenWidth, screenHeight, hwndDC, 0, 0, SRCCOPY);
+    GetDIBits(saveDC, bitMap, 0, screenHeight - titleBarSize, frame.data, (BITMAPINFO*)&bi, DIB_RGB_COLORS);
 
     DeleteObject(bitMap);
     DeleteDC(saveDC);
@@ -149,10 +150,13 @@ bool IsPaimonSpeaking() {
 
 
 bool IsGenshinProcess(DWORD pid) {
+    // Sometimes overflows
     TCHAR buff[1024];
-    HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (GetProcessImageFileName(handle, reinterpret_cast<LPSTR>(buff), sizeof(buff))) {
-        return ((std::string) buff).find("GenshinImpact.exe") != std::string::npos;
+    HANDLE handle = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pid);
+    if (GetProcessImageFileName(handle, buff, sizeof(buff))) {
+        std::wstring test(&buff[0]);
+        std::string str = std::string(test.begin(), test.end());
+        return str.find("GenshinImpact.exe") != std::string::npos;
     }
     return false;
 }
