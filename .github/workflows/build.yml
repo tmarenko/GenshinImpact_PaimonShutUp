@@ -1,0 +1,82 @@
+name: Build App
+
+on: [workflow_dispatch]
+
+
+env:
+  BUILD_TYPE: Release
+  OPENCV_VERSION: 4.2.0
+  LEPTONICA_VERSION: 1.74.3
+  TESSERACT_VERSION: 3.05.02
+  TESSERACT_ENG_DATA: https://github.com/tesseract-ocr/tessdata/raw/3.04.00/eng.traineddata
+  REPO_NAME: ${{ github.event.repository.name }}
+  LEPTONICA_BUILD: ${{github.workspace}}/leptonica/build
+  TESSERACT_BUILD: ${{github.workspace}}/tesseract/build
+  OPENCV_BUILD: ${{github.workspace}}/opencv/build
+
+jobs:
+
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          repository: DanBloomberg/leptonica
+          ref: ${{env.LEPTONICA_VERSION}}
+          path: leptonica
+
+      - uses: actions/checkout@v3
+        with:
+          repository: tesseract-ocr/tesseract
+          ref: ${{env.TESSERACT_VERSION}}
+          path: tesseract
+
+      - uses: actions/checkout@v3
+        with:
+          repository: opencv/opencv
+          ref: ${{env.OPENCV_VERSION}}
+          path: opencv
+
+      - uses: actions/checkout@v3
+        with:
+          path: ${{env.REPO_NAME}}
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build Leptonica ${{env.LEPTONICA_VERSION}}
+        run: |
+          cd ${{github.workspace}}/leptonica
+          cmake -B ${{env.LEPTONICA_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.LEPTONICA_BUILD}} -DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=ON
+          cmake --build ${{env.LEPTONICA_BUILD}} --config ${{env.BUILD_TYPE}} --target install
+
+      - name: Build Tesseract-OCR ${{env.TESSERACT_VERSION}}
+        run: |
+          cd ${{github.workspace}}/tesseract
+          cmake -B ${{env.TESSERACT_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH=${{env.LEPTONICA_BUILD}} -DCMAKE_INSTALL_PREFIX=${{env.TESSERACT_BUILD}} -DBUILD_TRAINING_TOOLS=OFF
+          cmake --build ${{env.TESSERACT_BUILD}} --config ${{env.BUILD_TYPE}} --target install
+
+      - name: Build OpenCV ${{env.OPENCV_VERSION}}
+        run: |
+          cd ${{github.workspace}}/opencv
+          cmake -B ${{env.OPENCV_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} -DBUILD_LIST="core,photo" -DWITH_FFMPEG=OFF
+          cmake --build ${{env.OPENCV_BUILD}} --config ${{env.BUILD_TYPE}} --target install
+
+      - name: Build ${{env.REPO_NAME}}
+        run: |
+          cd ${{github.workspace}}/${{env.REPO_NAME}}
+          cmake -B ${{github.workspace}}/${{env.REPO_NAME}}/build -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH="${{env.LEPTONICA_BUILD}};${{env.TESSERACT_BUILD}};${{env.OPENCV_BUILD}}"
+          cmake --build ${{github.workspace}}/${{env.REPO_NAME}}/build --config ${{env.BUILD_TYPE}}
+
+      - name: Copying dependencies
+        run: |
+          cp ${{env.LEPTONICA_BUILD}}/bin/leptonica*.dll ${{github.workspace}}/${{env.REPO_NAME}}/build/bin
+          cp ${{env.TESSERACT_BUILD}}/bin/tesseract*.dll ${{github.workspace}}/${{env.REPO_NAME}}/build/bin
+          cp ${{env.OPENCV_BUILD}}/bin/opencv_core*.dll ${{github.workspace}}/${{env.REPO_NAME}}/build/bin
+          cp ${{env.OPENCV_BUILD}}/bin/opencv_imgproc*.dll ${{github.workspace}}/${{env.REPO_NAME}}/build/bin
+
+      - uses: actions/upload-artifact@master
+        if: always()
+        with:
+          name: ${{env.REPO_NAME}}-build
+          path: ${{github.workspace}}/${{env.REPO_NAME}}/build/bin

@@ -1,19 +1,12 @@
-cmake_minimum_required(VERSION 3.17)
+cmake_minimum_required(VERSION 3.16)
 project(GenshinImpact_PaimonShutUp)
 
 set(CMAKE_CXX_STANDARD 14)
-set(DEBUG_SUFFIX "release")
-if (CMAKE_BUILD_TYPE MATCHES "Debug")
-    set(DEBUG_SUFFIX "debug")
-endif ()
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
 
-
-set(OpenCV_DIR C:\\OpenCV\\opencv\\build)
-set(Tesseract_DIR C:\\tesseract-3.05.02\\cmake-build-${DEBUG_SUFFIX})
-set(Leptonica_DIR C:\\leptonica-1.74.3\\cmake-build-${DEBUG_SUFFIX})
-
-find_package(OpenCV COMPONENTS core REQUIRED)
-find_package(Leptonica 1.74 REQUIRED CONFIG)
+find_package(OpenCV 4.2.0 COMPONENTS core imgproc REQUIRED)
+find_package(Leptonica 1.74 REQUIRED)
 find_package(Tesseract 3.05 REQUIRED)
 
 MESSAGE(STATUS "Include dirs ${OpenCV_INCLUDE_DIRS} ${Leptonica_INCLUDE_DIRS} ${Tesseract_INCLUDE_DIRS}")
@@ -26,15 +19,9 @@ add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesse
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${Leptonica_LIBRARIES} libtesseract)
 
-if (WIN32)
-    set(DEBUG_SUFFIX)
-    if (CMAKE_BUILD_TYPE MATCHES "Debug")
-        set(DEBUG_SUFFIX "d")
-    endif ()
-    if (EXISTS "${OpenCV_DIR}/x64/vc15/bin/opencv_world420${DEBUG_SUFFIX}.dll")
-        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-                COMMAND ${CMAKE_COMMAND} -E copy
-                "${OpenCV_DIR}/x64/vc15/bin/opencv_world420${DEBUG_SUFFIX}.dll"
-                "$<TARGET_FILE_DIR:${PROJECT_NAME}>")
-    endif ()
+if (NOT EXISTS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/eng.traineddata")
+    MESSAGE(STATUS "Downloading Tesseract-OCR data for ENG language")
+    file(DOWNLOAD
+            https://github.com/tesseract-ocr/tessdata/raw/3.04.00/eng.traineddata
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/eng.traineddata)
 endif ()
