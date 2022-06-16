@@ -3,7 +3,6 @@ project(GenshinImpact_PaimonShutUp)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
 
 find_package(OpenCV 4.2.0 COMPONENTS core imgproc REQUIRED)
 find_package(Leptonica 1.74 REQUIRED)
@@ -15,6 +14,7 @@ include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h)
+set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'")
 
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${Leptonica_LIBRARIES} libtesseract)
