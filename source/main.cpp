@@ -152,8 +152,10 @@ bool IsGenshinProcess(DWORD pid) {
     TCHAR buff[1024];
     HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
     if (GetProcessImageFileName(handle, reinterpret_cast<LPSTR>(buff), sizeof(buff))) {
+        CloseHandle(handle);
         return ((std::string) buff).find("GenshinImpact.exe") != std::string::npos;
     }
+    CloseHandle(handle);
     return false;
 }
 
