@@ -31,4 +31,11 @@ endif ()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
+        COMMENT "Copying dependencies..."
+        COMMAND_EXPAND_LISTS)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND "mt.exe" -manifest "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe.manifest" -outputresource:"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe"
+        COMMAND ${CMAKE_COMMAND} -E remove -f "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe.manifest"
+        COMMENT "Embedding manifest..."
         COMMAND_EXPAND_LISTS)
