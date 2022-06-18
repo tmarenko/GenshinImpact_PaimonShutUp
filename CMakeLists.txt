@@ -16,7 +16,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h)
+add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc)
 set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'")
 
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
