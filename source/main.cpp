@@ -172,11 +172,13 @@ HRESULT SetMuteGenshin(BOOL bMute) {
         return hr;
 
     hr = m_pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
+    m_pEnumerator->Release();
     if (FAILED(hr))
         return hr;
 
     IAudioSessionManager2 *pasm = NULL;
     hr = pDevice->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void **) &pasm);
+    pDevice->Release();
     if (FAILED(hr))
         return hr;
 
