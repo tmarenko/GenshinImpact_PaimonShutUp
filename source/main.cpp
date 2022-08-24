@@ -9,6 +9,7 @@
 #include <csignal>
 #include "tesseract.h"
 #include "config.h"
+#include "debug_widget.h"
 
 
 typedef struct GenshinWindowInfo {
@@ -161,6 +162,7 @@ bool IsPaimonSpeaking(const std::string &paimonName) {
     if (gwi.muteOverworld){
         cv::Rect overworldDialoguePos = GetDialogueRect(frame.size(), "OVERWORLD");
         std::string overworldDialogue = GetTextFromImageByRect(frame, overworldDialoguePos);
+        ShowDebugImage(frame, defaultDialoguePos, overworldDialoguePos, DIALOGUE_NAME_COLOR_RANGE_LOW, DIALOGUE_NAME_COLOR_RANGE_HIGH);
         return IsStringsSimilar(defaultDialogue, paimonName, gwi.maxOcrErrors) ||
                IsStringsSimilar(overworldDialogue, paimonName, gwi.maxOcrErrors);
     }

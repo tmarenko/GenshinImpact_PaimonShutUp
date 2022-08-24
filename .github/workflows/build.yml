@@ -1,4 +1,4 @@
-name: Build App
+name: Build App (Debug)
 
 on: [workflow_dispatch]
 
@@ -59,7 +59,7 @@ jobs:
       - name: Build OpenCV ${{env.OPENCV_VERSION}}
         run: |
           cd ${{github.workspace}}/opencv
-          cmake -B ${{env.OPENCV_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} -DBUILD_LIST="core,photo" -DWITH_FFMPEG=OFF -DBUILD_opencv_imgcodecs=OFF -DBUILD_opencv_apps=OFF -DBUILD_SHARED_LIBS=OFF -DWITH_PROTOBUF=OFF -DWITH_LAPACK=OFF -DSTATIC=1
+          cmake -B ${{env.OPENCV_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} -DBUILD_LIST="core,photo,highgui" -DWITH_FFMPEG=OFF -DBUILD_opencv_apps=OFF -DBUILD_SHARED_LIBS=OFF -DSTATIC=1 -DWITH_PROTOBUF=OFF -DWITH_LAPACK=OFF 
           cmake --build ${{env.OPENCV_BUILD}} --config ${{env.BUILD_TYPE}} --target install
 
       - name: Build ${{env.REPO_NAME}}

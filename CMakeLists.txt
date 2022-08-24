@@ -20,7 +20,7 @@ set(OpenCV_STATIC ON)
 set(Leptonica_STATIC ON)
 set(Tesseract_STATIC ON)
 
-find_package(OpenCV 4.2.0 COMPONENTS core imgproc REQUIRED)
+find_package(OpenCV 4.2.0 COMPONENTS core imgproc highgui REQUIRED)
 find_package(Leptonica 1.74 REQUIRED)
 find_package(Tesseract 3.05 REQUIRED)
 
@@ -29,7 +29,7 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc source/config.cpp source/config.h)
+add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc source/config.cpp source/config.h source/debug_widget.cpp source/debug_widget.h)
 set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
