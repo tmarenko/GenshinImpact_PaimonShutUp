@@ -110,7 +110,7 @@ void GetFrame(int screenWidth, int screenHeight) {
     auto bitMap = CreateCompatibleBitmap(hwndDC, screenWidth, screenHeight);
     SelectObject(saveDC, bitMap);
 
-    PrintWindow(genshinWindow, saveDC, PW_RENDERFULLCONTENT);
+    BitBlt(saveDC, 0, 0, screenWidth, screenHeight, hwndDC, 0, 0, SRCCOPY);
     GetDIBits(saveDC, bitMap, 0, screenHeight - titleBarSize, frame.data, (BITMAPINFO *) &bi, DIB_RGB_COLORS);
 
     DeleteObject(bitMap);
