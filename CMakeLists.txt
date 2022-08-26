@@ -3,6 +3,8 @@ project(GenshinImpact_PaimonShutUp)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
+set(MAIN_MANIFEST "main.manifest")
 if(NOT TESSERACT_ENG_DATA)
     set(TESSERACT_ENG_DATA "https://github.com/tesseract-ocr/tessdata/raw/3.04.00/eng.traineddata")
 endif()
@@ -17,7 +19,6 @@ include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc)
-set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS /MANIFESTUAC:"level='requireAdministrator' uiAccess='false'")
 
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${Leptonica_LIBRARIES} libtesseract)
@@ -34,8 +35,14 @@ add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMENT "Copying dependencies..."
         COMMAND_EXPAND_LISTS)
 
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/${MAIN_MANIFEST}
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${MAIN_MANIFEST})
+
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "mt.exe" -manifest "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe.manifest" -outputresource:"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe"
-        COMMAND ${CMAKE_COMMAND} -E remove -f "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe.manifest"
+        COMMAND "mt.exe" -manifest "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${MAIN_MANIFEST}" -outputresource:"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe"
+        COMMAND ${CMAKE_COMMAND} -E remove -f "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${MAIN_MANIFEST}"
         COMMENT "Embedding manifest..."
         COMMAND_EXPAND_LISTS)
