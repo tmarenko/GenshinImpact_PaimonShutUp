@@ -1,12 +1,17 @@
 cmake_minimum_required(VERSION 3.21)
 project(GenshinImpact_PaimonShutUp)
 
+ADD_DEFINITIONS(-DUNICODE)
+ADD_DEFINITIONS(-D_UNICODE)
+
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
 set(MAIN_MANIFEST "main.manifest")
-if(NOT TESSERACT_ENG_DATA)
-    set(TESSERACT_ENG_DATA "https://github.com/tesseract-ocr/tessdata/raw/3.04.00/eng.traineddata")
+set(CONFIG_FILE "settings.cfg")
+if(NOT TESSERACT_LANGUAGE)
+    MESSAGE(STATUS "TESSERACT_LANGUAGE is empty. Using 'eng' as default")
+    set(TESSERACT_LANGUAGE "eng")
 endif()
 
 find_package(OpenCV 4.2.0 COMPONENTS core imgproc REQUIRED)
@@ -18,16 +23,17 @@ include_directories(${OpenCV_INCLUDE_DIRS})
 include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc)
+add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc source/config.cpp source/config.h)
 
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${Leptonica_LIBRARIES} libtesseract)
 
-if (NOT EXISTS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/eng.traineddata")
-    MESSAGE(STATUS "Downloading Tesseract-OCR data for ENG language from: ${TESSERACT_ENG_DATA}")
+if (NOT EXISTS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/${TESSERACT_LANGUAGE}.traineddata")
+    set(TESSERACT_LANG_DATA "https://github.com/tesseract-ocr/tessdata/raw/3.04.00/${TESSERACT_LANGUAGE}.traineddata")
+    MESSAGE(STATUS "Downloading Tesseract-OCR data for '${TESSERACT_LANGUAGE}' language from: ${TESSERACT_LANG_DATA}")
     file(DOWNLOAD
-            ${TESSERACT_ENG_DATA}
-            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/eng.traineddata)
+            ${TESSERACT_LANG_DATA}
+            ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/${TESSERACT_LANGUAGE}.traineddata)
 endif ()
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
@@ -40,6 +46,12 @@ add_custom_command(
         COMMAND ${CMAKE_COMMAND} -E copy
         ${CMAKE_SOURCE_DIR}/${MAIN_MANIFEST}
         ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${MAIN_MANIFEST})
+
+add_custom_command(
+        TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${CMAKE_SOURCE_DIR}/${CONFIG_FILE}
+        ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${CONFIG_FILE})
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND "mt.exe" -manifest "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${MAIN_MANIFEST}" -outputresource:"${CMAKE_RUNTIME_OUTPUT_DIRECTORY}\\${PROJECT_NAME}.exe"

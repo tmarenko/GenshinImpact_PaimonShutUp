@@ -8,13 +8,13 @@
 #include "psapi.h"
 #include <csignal>
 #include "tesseract.h"
+#include "config.h"
 
-#define PW_RENDERFULLCONTENT 0x00000002 // Properly capture DirectComposition genshinWindow content
 
 typedef struct GenshinWindowInfo {
-    const char *windowName = "Genshin Impact";
-    const char *windowClass = "UnityWndClass";
-    HWND hwnd = NULL;
+    std::wstring windowName = L"Genshin Impact";
+    std::wstring windowClass = L"UnityWndClass";
+    HWND hwnd = nullptr;
     int width = 0;
     int height = 0;
     bool active = false;
@@ -31,21 +31,21 @@ const cv::Scalar DEFAULT_DIALOGUE_NAME_POS = {0.4631496915663028, 0.787213101603
 const cv::Scalar OUT_DIALOGUE_NAME_POS = {0.4645968857034299, 0.7582338162046451, 0.5333868470215386, 0.8020998784944536};
 const cv::Scalar DIALOGUE_NAME_COLOR_RANGE_LOW = {0, 170, 230};   // BGR
 const cv::Scalar DIALOGUE_NAME_COLOR_RANGE_HIGH = {10, 210, 255}; // BGR
-const char * PAIMON_NAME = "Paimon";
 
 cv::Mat frame;
 HWND genshinWindow;
 GenshinWindowInfo gwi;
+std::wstring genshinExe = L"GenshinImpact.exe";
 
 
 BOOL CALLBACK EnumWindowsFunc(HWND hwnd, LPARAM lParam) {
     auto *gwiParam = (GenshinWindowInfo *) lParam;
-    TCHAR buf[1024]{};
+    WCHAR buf[1024]{};
 
     GetClassName(hwnd, buf, 100);
-    if (!lstrcmp(buf, gwiParam->windowClass)) {
+    if (!lstrcmp(buf, gwiParam->windowClass.c_str())) {
         GetWindowText(hwnd, buf, 100);
-        if (!lstrcmp(buf, gwiParam->windowName)) {
+        if (!lstrcmp(buf, gwiParam->windowName.c_str())) {
             gwiParam->hwnd = hwnd;
             RECT windowRect;
             GetWindowRect(hwnd, &windowRect);
@@ -61,17 +61,17 @@ void FindGenshinWindow() {
     EnumWindows(EnumWindowsFunc, (LPARAM) (&gwi));
     genshinWindow = gwi.hwnd;
 
-    TCHAR buff[1024]{};
+    WCHAR buff[1024]{};
     GetWindowText(genshinWindow, buff, 100);
-    if (!lstrcmp(buff, gwi.windowName)) {
-        if (!gwi.active) {
+    if (!lstrcmp(buff, gwi.windowName.c_str())) {
+        if (gwi.hwnd && !gwi.active) {
             gwi.active = true;
             std::cout << "Ready for Paimon!" << std::endl;
         }
     } else {
         if (gwi.active) {
             gwi.active = false;
-            gwi.hwnd = NULL;
+            gwi.hwnd = nullptr;
             std::cout << "Game was closed" << std::endl;
         }
     }
@@ -130,7 +130,7 @@ std::string GetTextFromImageByRect(const cv::Mat &image, const cv::Rect& rect) {
 }
 
 
-bool IsPaimonSpeaking() {
+bool IsPaimonSpeaking(const std::string &paimonName) {
     GetFrame(gwi.width, gwi.height);
     if (frame.empty())
         return false;
@@ -144,16 +144,16 @@ bool IsPaimonSpeaking() {
                                 (int) (OUT_DIALOGUE_NAME_POS.val[3] * frame.rows) - (int) (OUT_DIALOGUE_NAME_POS.val[1] * frame.rows));
     std::string defaultDialogue = GetTextFromImageByRect(frame, cropDefault);
     std::string outDialogue = GetTextFromImageByRect(frame, cropOut);
-    return IsStringsSimilar(defaultDialogue, PAIMON_NAME) || IsStringsSimilar(outDialogue, PAIMON_NAME);
+    return IsStringsSimilar(defaultDialogue, paimonName) || IsStringsSimilar(outDialogue, paimonName);
 }
 
 
 bool IsGenshinProcess(DWORD pid) {
-    TCHAR buff[1024];
+    WCHAR buff[1024];
     HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (GetProcessImageFileName(handle, reinterpret_cast<LPSTR>(buff), sizeof(buff))) {
+    if (GetProcessImageFileName(handle, buff, sizeof(buff))) {
         CloseHandle(handle);
-        return ((std::string) buff).find("GenshinImpact.exe") != std::string::npos;
+        return std::wstring(&buff[0]).find(genshinExe) != std::wstring::npos;
     }
     CloseHandle(handle);
     return false;
@@ -217,16 +217,20 @@ HRESULT SetMuteGenshin(BOOL bMute) {
 
 
 int PaimonShutUp() {
-    if (InitTesseract(NULL, "eng"))
+    std::map<std::string, std::string> configMap = ParseConfig("settings.cfg");
+    gwi.windowName = convertStringToWstring(configMap["genshin_" + configMap["language"]]);
+    DownloadTessdataFileIfNecessary(configMap["language"]);
+    if (InitTesseract(nullptr, configMap["language"].c_str()))
         return 1;
 
-    bool paimonWasHere = false;
+    std::string paimonName = configMap["paimon_" + configMap["language"]];
     std::cout << "Waiting for GenshinImpact.exe process." << std::endl;
+    bool paimonWasHere = false;
     while (!stop) {
         FindGenshinWindow();
         if (!gwi.active)
             continue;
-        bool isPaimonSpeaking = IsPaimonSpeaking();
+        bool isPaimonSpeaking = IsPaimonSpeaking(paimonName);
         if (isPaimonSpeaking && !paimonWasHere) {
             paimonWasHere = true;
             std::cout << "Paimon, shut up!" << std::endl;

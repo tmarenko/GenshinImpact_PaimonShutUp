@@ -1,10 +1,10 @@
 #include "tesseract.h"
 
 tesseract::TessBaseAPI *tesseractApi;
-const char *asciiLetters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+const char *tesseractDownloadUrl = "https://github.com/tesseract-ocr/tessdata/raw/3.04.00/";
 
 
-int InitTesseract(const char* dataPath, const char* language) {
+int InitTesseract(const char *dataPath, const char *language) {
     tesseractApi = new tesseract::TessBaseAPI();
     if (tesseractApi->Init(dataPath, language)) {
         std::cout << "Could not initialize tesseract lib." << std::endl;
@@ -15,7 +15,7 @@ int InitTesseract(const char* dataPath, const char* language) {
     tesseractApi->SetVariable("tessedit_oem_mode", OEM_DEFAULT);
     tesseractApi->SetVariable("debug_file", "/dev/null");
 
-    std::cout << "Initialized Tesseract API." << std::endl;
+    std::cout << "Initialized Tesseract API with '" << language << "' language." << std::endl;
     return 0;
 }
 
@@ -34,9 +34,9 @@ std::string StripText(const std::string &input) {
         return input;
     auto start_it = input.begin();
     auto end_it = input.rbegin();
-    while (start_it != input.end() && std::isspace(*start_it))
+    while (start_it != input.end() && (*start_it == ' ' || *start_it == '\n'))
         ++start_it;
-    while (end_it != input.rend() && std::isspace(*end_it))
+    while (end_it != input.rend() && (*end_it == ' ' || *end_it == '\n'))
         ++end_it;
     if (start_it > end_it.base())
         return std::string();
@@ -50,7 +50,6 @@ std::string GetTextFromImage(const cv::Mat &image) {
         return std::string();
     }
     char *tesseractOutText;
-    tesseractApi->SetVariable("tessedit_char_whitelist", asciiLetters);
     tesseractApi->SetVariable("tessedit_pageseg_mode", AUTOMATIC_PAGE_SEGMENTATION);
     tesseractApi->SetImage(image.data, image.cols, image.rows, image.channels(), image.cols * image.channels());
     tesseractOutText = tesseractApi->GetUTF8Text();
@@ -78,9 +77,31 @@ unsigned int LevenshteinDistance(const std::string &s1, const std::string &s2) {
 }
 
 
-bool IsStringsSimilar(std::string s1, std::string s2, const double overlap) {
+bool IsStringsSimilar(std::string s1, std::string s2, double overlap) {
     std::transform(s1.begin(), s1.end(), s1.begin(), ::toupper);
     std::transform(s2.begin(), s2.end(), s2.begin(), ::toupper);
     double nonSimilarity = s1.length() > 0 ? (double) LevenshteinDistance(s1, s2) / s1.length() : 1;
     return nonSimilarity <= overlap;
+}
+
+
+inline bool CheckFileExists(const std::string &name) {
+    struct stat buffer{};
+    return (stat(name.c_str(), &buffer) == 0);
+}
+
+
+void DownloadTessdataFileIfNecessary(const std::string &language) {
+    std::string pathToLanguage = "tessdata/" + language + ".traineddata";
+    if (CheckFileExists(pathToLanguage)) {
+        std::cout << "Found Tesseract data for '" << language << "' language at " + pathToLanguage << std::endl;
+        return;
+    }
+    std::string downloadUrl = tesseractDownloadUrl + language + ".traineddata";
+    std::cout << "Downloading Tesseract data for '" << language << "' language from " + downloadUrl << std::endl;
+    HRESULT hr = URLDownloadToFileA(nullptr, downloadUrl.c_str(), pathToLanguage.c_str(), 0, nullptr);
+    if (hr == S_OK)
+        std::cout << "Download complete. Saved to " + pathToLanguage << std::endl;
+    else
+        std::cout << "Error during download: " + std::to_string(hr) << std::endl;
 }
