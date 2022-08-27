@@ -1,5 +1,9 @@
 # GenshinImpact_PaimonShutUp
 
+![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/tmarenko/GenshinImpact_PaimonShutUp/Build%20App/main)
+![GitHub release (latest by date)](https://img.shields.io/github/downloads/tmarenko/GenshinImpact_PaimonShutUp/total)
+![GitHub](https://img.shields.io/github/license/tmarenko/GenshinImpact_PaimonShutUp)
+
 Automatically mutes Paimon when she speaks
 
 #### Watch how it works: https://youtu.be/pBpDdLcw6zk
