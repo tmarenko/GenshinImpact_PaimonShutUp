@@ -1,9 +1,11 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.17)
 project(GenshinImpact_PaimonShutUp)
 
 ADD_DEFINITIONS(-DUNICODE)
 ADD_DEFINITIONS(-D_UNICODE)
 
+set(CMAKE_CXX_FLAGS_RELEASE "/MT")
+set(CMAKE_CXX_FLAGS_DEBUG "/MTd")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /MANIFEST:NO")
@@ -13,6 +15,10 @@ if(NOT TESSERACT_LANGUAGE)
     MESSAGE(STATUS "TESSERACT_LANGUAGE is empty. Using 'eng' as default")
     set(TESSERACT_LANGUAGE "eng")
 endif()
+
+set(OpenCV_STATIC ON)
+set(Leptonica_STATIC ON)
+set(Tesseract_STATIC ON)
 
 find_package(OpenCV 4.2.0 COMPONENTS core imgproc REQUIRED)
 find_package(Leptonica 1.74 REQUIRED)
@@ -24,6 +30,7 @@ include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
 add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc source/config.cpp source/config.h)
+set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
 MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${Leptonica_LIBRARIES} libtesseract)
@@ -35,11 +42,6 @@ if (NOT EXISTS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/${TESSERACT_LANGUAGE}
             ${TESSERACT_LANG_DATA}
             ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/${TESSERACT_LANGUAGE}.traineddata)
 endif ()
-
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_RUNTIME_DLLS:${PROJECT_NAME}> $<TARGET_FILE_DIR:${PROJECT_NAME}>
-        COMMENT "Copying dependencies..."
-        COMMAND_EXPAND_LISTS)
 
 add_custom_command(
         TARGET ${PROJECT_NAME} POST_BUILD

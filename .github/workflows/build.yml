@@ -47,19 +47,19 @@ jobs:
       - name: Build Leptonica ${{env.LEPTONICA_VERSION}}
         run: |
           cd ${{github.workspace}}/leptonica
-          cmake -B ${{env.LEPTONICA_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.LEPTONICA_BUILD}} -DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=ON -DCMAKE_CXX_FLAGS=/DNO_CONSOLE_IO=1
+          cmake -B ${{env.LEPTONICA_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.LEPTONICA_BUILD}} -DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=ON -DCMAKE_CXX_FLAGS=/DNO_CONSOLE_IO=1 -DCMAKE_CXX_FLAGS_RELEASE=/DMT -DCMAKE_CXX_FLAGS_DEBUG=/DMTd -DSTATIC=1
           cmake --build ${{env.LEPTONICA_BUILD}} --config ${{env.BUILD_TYPE}} --target install
 
       - name: Build Tesseract-OCR ${{env.TESSERACT_VERSION}}
         run: |
           cd ${{github.workspace}}/tesseract
-          cmake -B ${{env.TESSERACT_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH=${{env.LEPTONICA_BUILD}} -DCMAKE_INSTALL_PREFIX=${{env.TESSERACT_BUILD}} -DBUILD_TRAINING_TOOLS=OFF
+          cmake -B ${{env.TESSERACT_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH=${{env.LEPTONICA_BUILD}} -DCMAKE_INSTALL_PREFIX=${{env.TESSERACT_BUILD}} -DBUILD_TRAINING_TOOLS=OFF -DCMAKE_CXX_FLAGS_RELEASE=/DMT -DCMAKE_CXX_FLAGS_DEBUG=/DMTd -DSTATIC=1
           cmake --build ${{env.TESSERACT_BUILD}} --config ${{env.BUILD_TYPE}} --target install
 
       - name: Build OpenCV ${{env.OPENCV_VERSION}}
         run: |
           cd ${{github.workspace}}/opencv
-          cmake -B ${{env.OPENCV_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} -DBUILD_LIST="core,photo" -DWITH_FFMPEG=OFF
+          cmake -B ${{env.OPENCV_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} -DBUILD_LIST="core,photo" -DWITH_FFMPEG=OFF -DBUILD_opencv_imgcodecs=OFF -DBUILD_opencv_apps=OFF -DBUILD_SHARED_LIBS=OFF -DSTATIC=1
           cmake --build ${{env.OPENCV_BUILD}} --config ${{env.BUILD_TYPE}} --target install
 
       - name: Build ${{env.REPO_NAME}}
