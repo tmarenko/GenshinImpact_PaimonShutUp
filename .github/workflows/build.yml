@@ -47,7 +47,7 @@ jobs:
       - name: Build Leptonica ${{env.LEPTONICA_VERSION}}
         run: |
           cd ${{github.workspace}}/leptonica
-          cmake -B ${{env.LEPTONICA_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.LEPTONICA_BUILD}} -DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=ON
+          cmake -B ${{env.LEPTONICA_BUILD}} -G "NMake Makefiles" -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_INSTALL_PREFIX=${{env.LEPTONICA_BUILD}} -DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=ON -DCMAKE_CXX_FLAGS=/DNO_CONSOLE_IO=1
           cmake --build ${{env.LEPTONICA_BUILD}} --config ${{env.BUILD_TYPE}} --target install
 
       - name: Build Tesseract-OCR ${{env.TESSERACT_VERSION}}
