@@ -1,6 +1,6 @@
 # GenshinImpact_PaimonShutUp
 
-![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/tmarenko/GenshinImpact_PaimonShutUp/Build%20App/main)
+![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/tmarenko/GenshinImpact_PaimonShutUp/build.yml?branch=main)
 ![GitHub release (latest by date)](https://img.shields.io/github/downloads/tmarenko/GenshinImpact_PaimonShutUp/total)
 ![GitHub](https://img.shields.io/github/license/tmarenko/GenshinImpact_PaimonShutUp)
 
