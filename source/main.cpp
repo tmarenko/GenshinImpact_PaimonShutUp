@@ -14,6 +14,7 @@
 typedef struct GenshinWindowInfo {
     std::wstring windowName = L"Genshin Impact";
     std::wstring windowClass = L"UnityWndClass";
+    int maxOcrErrors = 1;
     HWND hwnd = nullptr;
     int width = 0;
     int height = 0;
@@ -144,7 +145,8 @@ bool IsPaimonSpeaking(const std::string &paimonName) {
                                 (int) (OUT_DIALOGUE_NAME_POS.val[3] * frame.rows) - (int) (OUT_DIALOGUE_NAME_POS.val[1] * frame.rows));
     std::string defaultDialogue = GetTextFromImageByRect(frame, cropDefault);
     std::string outDialogue = GetTextFromImageByRect(frame, cropOut);
-    return IsStringsSimilar(defaultDialogue, paimonName) || IsStringsSimilar(outDialogue, paimonName);
+    return IsStringsSimilar(defaultDialogue, paimonName, gwi.maxOcrErrors) ||
+           IsStringsSimilar(outDialogue, paimonName, gwi.maxOcrErrors);
 }
 
 
@@ -223,6 +225,7 @@ int PaimonShutUp() {
     if (InitTesseract(nullptr, configMap["language"].c_str()))
         return 1;
 
+    gwi.maxOcrErrors = std::stoi(configMap["ocr_max_errors"]);
     std::string paimonName = configMap["paimon_" + configMap["language"]];
     std::cout << "Waiting for GenshinImpact.exe process." << std::endl;
     bool paimonWasHere = false;

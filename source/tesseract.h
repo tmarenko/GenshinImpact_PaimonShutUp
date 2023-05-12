@@ -24,7 +24,7 @@ std::string GetTextFromImage(const cv::Mat &image);
 
 unsigned int LevenshteinDistance(const std::string &s1, const std::string &s2);
 
-bool IsStringsSimilar(std::string s1, std::string s2, double overlap = 0.4);
+bool IsStringsSimilar(std::string s1, std::string s2, int maxDifference);
 
 void DownloadTessdataFileIfNecessary(const std::string &language);
 

@@ -3,9 +3,10 @@
 
 std::map<std::string, std::string> ParseConfig(const std::string &fileName) {
     std::map<std::string, std::string> configMap = {
-            {"language",    "eng"},
-            {"genshin_eng", "Genshin Impact"},
-            {"paimon_eng",  "Paimon"}
+            {"language",       "eng"},
+            {"genshin_eng",    "Genshin Impact"},
+            {"paimon_eng",     "Paimon"},
+            {"ocr_max_errors", "1"}
     };
     std::ifstream file(fileName);
     if (file.is_open()) {

@@ -77,11 +77,13 @@ unsigned int LevenshteinDistance(const std::string &s1, const std::string &s2) {
 }
 
 
-bool IsStringsSimilar(std::string s1, std::string s2, double overlap) {
+bool IsStringsSimilar(std::string s1, std::string s2, int maxDifference) {
+    if (s1.length() == 0) {
+        return false;
+    }
     std::transform(s1.begin(), s1.end(), s1.begin(), ::toupper);
     std::transform(s2.begin(), s2.end(), s2.begin(), ::toupper);
-    double nonSimilarity = s1.length() > 0 ? (double) LevenshteinDistance(s1, s2) / s1.length() : 1;
-    return nonSimilarity <= overlap;
+    return LevenshteinDistance(s1, s2) <= maxDifference;
 }
 
 
