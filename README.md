@@ -13,18 +13,17 @@ Automatically mutes Paimon when she speaks
 Download archive from
 [latest release](https://github.com/tmarenko/GenshinImpact_PaimonShutUp/releases)
 , extract it and run `GenshinImpact_PaimonShutUp.exe` with administrator privileges. 
-Administrator rights needed for access to Windows Audio session.
+Administrator rights needed for access to 
+[Windows Audio session](https://learn.microsoft.com/en-us/windows/win32/api/audioclient/nn-audioclient-isimpleaudiovolume).
 
-## Setup in-game language
+## Configuration
 
-Edit `settings.cfg` file and set your in-game language in `language` variable:
+### Edit `settings.cfg` file to:
+* setup in-game language
+* disable mute in the overworld
+* adjust name recognition to be more or less strict
 
-```buildoutcfg
-[config]
-language=eng
-```
-
-Supported languages:
+### Supported languages:
 * 简体中文 (`language=chi_sim`)
 * 繁體中文 (`language=chi_tra`)
 * English (`language=eng`)
