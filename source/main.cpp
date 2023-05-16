@@ -15,6 +15,7 @@ typedef struct GenshinWindowInfo {
     std::wstring windowName = L"Genshin Impact";
     std::wstring windowClass = L"UnityWndClass";
     int maxOcrErrors = 1;
+    bool muteOverworld = true;
     HWND hwnd = nullptr;
     int width = 0;
     int height = 0;
@@ -155,11 +156,15 @@ bool IsPaimonSpeaking(const std::string &paimonName) {
         return false;
 
     cv::Rect defaultDialoguePos = GetDialogueRect(frame.size(), "DEFAULT");
-    cv::Rect overworldDialoguePos = GetDialogueRect(frame.size(), "OVERWORLD");
     std::string defaultDialogue = GetTextFromImageByRect(frame, defaultDialoguePos);
-    std::string overworldDialogue = GetTextFromImageByRect(frame, overworldDialoguePos);
-    return IsStringsSimilar(defaultDialogue, paimonName, gwi.maxOcrErrors) ||
-           IsStringsSimilar(overworldDialogue, paimonName, gwi.maxOcrErrors);
+
+    if (gwi.muteOverworld){
+        cv::Rect overworldDialoguePos = GetDialogueRect(frame.size(), "OVERWORLD");
+        std::string overworldDialogue = GetTextFromImageByRect(frame, overworldDialoguePos);
+        return IsStringsSimilar(defaultDialogue, paimonName, gwi.maxOcrErrors) ||
+               IsStringsSimilar(overworldDialogue, paimonName, gwi.maxOcrErrors);
+    }
+    return IsStringsSimilar(defaultDialogue, paimonName, gwi.maxOcrErrors);
 }
 
 
@@ -239,6 +244,7 @@ int PaimonShutUp() {
         return 1;
 
     gwi.maxOcrErrors = std::stoi(configMap["ocr_max_errors"]);
+    gwi.muteOverworld = configMap["mute_overworld"] == "1";
     std::string paimonName = configMap["paimon_" + configMap["language"]];
     std::cout << "Waiting for GenshinImpact.exe process." << std::endl;
     bool paimonWasHere = false;

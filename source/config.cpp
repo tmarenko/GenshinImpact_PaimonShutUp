@@ -6,7 +6,8 @@ std::map<std::string, std::string> ParseConfig(const std::string &fileName) {
             {"language",       "eng"},
             {"genshin_eng",    "Genshin Impact"},
             {"paimon_eng",     "Paimon"},
-            {"ocr_max_errors", "1"}
+            {"ocr_max_errors", "1"},
+            {"mute_overworld", "1"}
     };
     std::ifstream file(fileName);
     if (file.is_open()) {
