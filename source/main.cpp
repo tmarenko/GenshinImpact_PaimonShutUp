@@ -28,8 +28,13 @@ void keyHand(int signum) {
 }
 
 
-const cv::Scalar DEFAULT_DIALOGUE_NAME_POS = {0.4631496915663028, 0.7872131016037641, 0.536658108769003, 0.8286028539255994};
-const cv::Scalar OUT_DIALOGUE_NAME_POS = {0.4645968857034299, 0.7582338162046451, 0.5333868470215386, 0.8020998784944536};
+std::map<std::string, cv::Scalar> dialoguePositions = {
+        {"16:9_DEFAULT",    {0.463, 0.787, 0.537, 0.829}},
+        {"16:9_OVERWORLD",  {0.465, 0.758, 0.533, 0.802}},
+        {"16:10_DEFAULT",   {0.461, 0.809, 0.538, 0.841}},
+        {"16:10_OVERWORLD", {0.462, 0.780, 0.538, 0.815}},
+};
+
 const cv::Scalar DIALOGUE_NAME_COLOR_RANGE_LOW = {0, 170, 230};   // BGR
 const cv::Scalar DIALOGUE_NAME_COLOR_RANGE_HIGH = {10, 210, 255}; // BGR
 
@@ -131,22 +136,30 @@ std::string GetTextFromImageByRect(const cv::Mat &image, const cv::Rect& rect) {
 }
 
 
+cv::Rect GetDialogueRect(const cv::Size &windowSize, const std::string &type) {
+    double aspectRatio = static_cast<double>(windowSize.width) / windowSize.height;
+    cv::Scalar dialoguePosition = dialoguePositions["16:9_" + type];
+
+    if (std::abs(aspectRatio - 16.0 / 10.0) < 0.01) {
+        dialoguePosition = dialoguePositions["16:10_" + type];
+    }
+    return {(int) (dialoguePosition.val[0] * windowSize.width),
+            (int) (dialoguePosition.val[1] * windowSize.height),
+            (int) (dialoguePosition.val[2] * windowSize.width) - (int) (dialoguePosition.val[0] * windowSize.width),
+            (int) (dialoguePosition.val[3] * windowSize.height) - (int) (dialoguePosition.val[1] * windowSize.height)};
+}
+
 bool IsPaimonSpeaking(const std::string &paimonName) {
     GetFrame(gwi.width, gwi.height);
     if (frame.empty())
         return false;
-    cv::Rect cropDefault = cv::Rect((int) (DEFAULT_DIALOGUE_NAME_POS.val[0] * frame.cols),
-                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[1] * frame.rows),
-                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[2] * frame.cols) - (int) (DEFAULT_DIALOGUE_NAME_POS.val[0] * frame.cols),
-                                    (int) (DEFAULT_DIALOGUE_NAME_POS.val[3] * frame.rows) - (int) (DEFAULT_DIALOGUE_NAME_POS.val[1] * frame.rows));
-    cv::Rect cropOut = cv::Rect((int) (OUT_DIALOGUE_NAME_POS.val[0] * frame.cols),
-                                (int) (OUT_DIALOGUE_NAME_POS.val[1] * frame.rows),
-                                (int) (OUT_DIALOGUE_NAME_POS.val[2] * frame.cols) - (int) (OUT_DIALOGUE_NAME_POS.val[0] * frame.cols),
-                                (int) (OUT_DIALOGUE_NAME_POS.val[3] * frame.rows) - (int) (OUT_DIALOGUE_NAME_POS.val[1] * frame.rows));
-    std::string defaultDialogue = GetTextFromImageByRect(frame, cropDefault);
-    std::string outDialogue = GetTextFromImageByRect(frame, cropOut);
+
+    cv::Rect defaultDialoguePos = GetDialogueRect(frame.size(), "DEFAULT");
+    cv::Rect overworldDialoguePos = GetDialogueRect(frame.size(), "OVERWORLD");
+    std::string defaultDialogue = GetTextFromImageByRect(frame, defaultDialoguePos);
+    std::string overworldDialogue = GetTextFromImageByRect(frame, overworldDialoguePos);
     return IsStringsSimilar(defaultDialogue, paimonName, gwi.maxOcrErrors) ||
-           IsStringsSimilar(outDialogue, paimonName, gwi.maxOcrErrors);
+           IsStringsSimilar(overworldDialogue, paimonName, gwi.maxOcrErrors);
 }
 
 
