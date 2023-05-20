@@ -16,10 +16,18 @@ Download archive from
 Administrator rights needed for access to 
 [Windows Audio session](https://learn.microsoft.com/en-us/windows/win32/api/audioclient/nn-audioclient-isimpleaudiovolume).
 
+## It's not working! What to do?
+
+Read [configuration section](#configuration) below and check the following steps:
+* Make sure that `language` parameter matches in-game language
+* Change `capture_mode` parameter to a different capture mode
+* If you are playing on a low screen resolution, try increasing `ocr_max_errors` parameter
+
 ## Configuration
 
 ### Edit `settings.cfg` file to:
 * setup in-game language
+* change screen capture modes
 * disable mute in the overworld
 * adjust name recognition to be more or less strict
 

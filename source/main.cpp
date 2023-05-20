@@ -15,6 +15,7 @@ typedef struct GenshinWindowInfo {
     std::wstring windowName = L"Genshin Impact";
     std::wstring windowClass = L"UnityWndClass";
     int maxOcrErrors = 1;
+    int captureMode = 1;
     bool muteOverworld = true;
     HWND hwnd = nullptr;
     int width = 0;
@@ -117,7 +118,19 @@ void GetFrame(int screenWidth, int screenHeight) {
     auto bitMap = CreateCompatibleBitmap(hwndDC, screenWidth, screenHeight);
     SelectObject(saveDC, bitMap);
 
-    BitBlt(saveDC, 0, 0, screenWidth, screenHeight, hwndDC, 0, 0, SRCCOPY);
+    switch (gwi.captureMode) {
+        case 0:
+            BitBlt(saveDC, 0, 0, screenWidth, screenHeight, hwndDC, 0, 0, SRCCOPY);
+            break;
+        case 1:
+            PrintWindow(genshinWindow, saveDC, PW_RENDERFULLCONTENT);
+            break;
+        default:
+            std::cout << "Invalid capture mode, reverting to default." << std::endl;
+            gwi.captureMode = 1;
+            PrintWindow(genshinWindow, saveDC, PW_RENDERFULLCONTENT);
+            break;
+    }
     GetDIBits(saveDC, bitMap, 0, screenHeight - titleBarSize, frame.data, (BITMAPINFO *) &bi, DIB_RGB_COLORS);
 
     DeleteObject(bitMap);
@@ -245,6 +258,7 @@ int PaimonShutUp() {
 
     gwi.maxOcrErrors = std::stoi(configMap["ocr_max_errors"]);
     gwi.muteOverworld = configMap["mute_overworld"] == "1";
+    gwi.captureMode = std::stoi(configMap["capture_mode"]);
     std::string paimonName = configMap["paimon_" + configMap["language"]];
     std::cout << "Waiting for GenshinImpact.exe process." << std::endl;
     bool paimonWasHere = false;
