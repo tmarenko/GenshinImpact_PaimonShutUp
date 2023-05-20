@@ -9,6 +9,8 @@
 #include <csignal>
 #include "tesseract.h"
 #include "config.h"
+#include <chrono>
+#include <thread>
 
 
 typedef struct GenshinWindowInfo {
@@ -269,13 +271,14 @@ int PaimonShutUp() {
         bool isPaimonSpeaking = IsPaimonSpeaking(paimonName);
         if (isPaimonSpeaking && !paimonWasHere) {
             paimonWasHere = true;
-            std::cout << "Paimon, shut up!" << std::endl;
             SetMuteGenshin(isPaimonSpeaking);
+            std::cout << "Paimon, shut up!" << std::endl;
         }
         if (!isPaimonSpeaking && paimonWasHere) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(250));
             paimonWasHere = false;
-            std::cout << "Unmuting the game." << std::endl;
             SetMuteGenshin(isPaimonSpeaking);
+            std::cout << "Unmuting the game." << std::endl;
         }
     }
     DestroyTesseract();
