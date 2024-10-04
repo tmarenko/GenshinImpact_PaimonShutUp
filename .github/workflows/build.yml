@@ -51,6 +51,16 @@ jobs:
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
             -DCMAKE_INSTALL_PREFIX=${{env.LEPTONICA_BUILD}} `
             -DCMAKE_DISABLE_FIND_PACKAGE_PkgConfig=ON `
+            -DBUILD_PROG=OFF `
+            -DBUILD_UTILS=OFF `
+            -DSW_BUILD=OFF `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DPNG=OFF `
+            -DJPEG=OFF `
+            -DTIFF=OFF `
+            -DZLIB=OFF `
+            -DWEBP=OFF `
+            -DGIF=OFF `
             -DCMAKE_CXX_FLAGS=/DNO_CONSOLE_IO=1 `
             -DCMAKE_CXX_FLAGS_RELEASE=/DMT `
             -DCMAKE_CXX_FLAGS_DEBUG=/DMTd `
@@ -65,6 +75,12 @@ jobs:
             -DCMAKE_PREFIX_PATH=${{env.LEPTONICA_BUILD}} `
             -DCMAKE_INSTALL_PREFIX=${{env.TESSERACT_BUILD}} `
             -DBUILD_TRAINING_TOOLS=OFF `
+            -DBUILD_TESTS=OFF `
+            -DBUILD_PROTOS=OFF `
+            -DBUILD_CONFIGS=OFF `
+            -DBUILD_DOCS=OFF `
+            -DBUILD_SHARED_LIBS=OFF `
+            -DDISABLE_CURL=ON `
             -DCMAKE_CXX_FLAGS_RELEASE=/DMT `
             -DCMAKE_CXX_FLAGS_DEBUG=/DMTd `
             -DSTATIC=1
@@ -76,14 +92,40 @@ jobs:
           cmake -B ${{env.OPENCV_BUILD}} -G "NMake Makefiles" `
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
             -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} `
-            -DBUILD_LIST="core,photo" `
-            -DWITH_FFMPEG=OFF `
-            -DWITH_OPENEXR=OFF `
-            -DBUILD_opencv_imgcodecs=OFF `
+            -DBUILD_LIST="core,imgproc" `
             -DBUILD_opencv_apps=OFF `
-            -DBUILD_SHARED_LIBS=OFF `
+            -DBUILD_opencv_calib3d=OFF `
+            -DBUILD_opencv_dnn=OFF `
+            -DBUILD_opencv_features2d=OFF `
+            -DBUILD_opencv_flann=OFF `
+            -DBUILD_opencv_gapi=OFF `
+            -DBUILD_opencv_highgui=OFF `
+            -DBUILD_opencv_imgcodecs=OFF `
+            -DBUILD_opencv_ml=OFF `
+            -DBUILD_opencv_objdetect=OFF `
+            -DBUILD_opencv_photo=OFF `
+            -DBUILD_opencv_stitching=OFF `
+            -DBUILD_opencv_video=OFF `
+            -DBUILD_opencv_videoio=OFF `
+            -DBUILD_opencv_world=OFF `
+            -DWITH_FFMPEG=OFF `
+            -DWITH_GSTREAMER=OFF `
+            -DWITH_QT=OFF `
+            -DWITH_OPENEXR=OFF `
+            -DWITH_IPP=OFF `
+            -DWITH_TBB=OFF `
+            -DWITH_EIGEN=OFF `
             -DWITH_PROTOBUF=OFF `
             -DWITH_LAPACK=OFF `
+            -DWITH_1394=OFF `
+            -DWITH_VTK=OFF `
+            -DWITH_CUDA=OFF `
+            -DWITH_CUFFT=OFF `
+            -DWITH_NVCUVID=OFF `
+            -DWITH_OPENGL=OFF `
+            -DWITH_VULKAN=OFF `
+            -DWITH_DSHOW=OFF `
+            -DBUILD_SHARED_LIBS=OFF `
             -DSTATIC=1
           cmake --build ${{env.OPENCV_BUILD}} --config ${{env.BUILD_TYPE}} --target install
 
