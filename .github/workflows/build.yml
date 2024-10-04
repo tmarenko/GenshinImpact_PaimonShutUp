@@ -78,6 +78,7 @@ jobs:
             -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} `
             -DBUILD_LIST="core,photo" `
             -DWITH_FFMPEG=OFF `
+            -DWITH_OPENEXR=OFF `
             -DBUILD_opencv_imgcodecs=OFF `
             -DBUILD_opencv_apps=OFF `
             -DBUILD_SHARED_LIBS=OFF `
