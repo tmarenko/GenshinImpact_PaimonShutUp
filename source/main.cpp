@@ -46,7 +46,6 @@ const Color DIALOGUE_NAME_COLOR_RANGE_LOW(230, 170, 0);   // RGB
 const Color DIALOGUE_NAME_COLOR_RANGE_HIGH(255, 210, 10); // RGB
 
 Image frame;
-HWND genshinWindow;
 GenshinWindowInfo gwi;
 std::wstring genshinExe = L"GenshinImpact.exe";
 
@@ -72,10 +71,9 @@ BOOL CALLBACK EnumWindowsFunc(HWND hwnd, LPARAM lParam) {
 
 void FindGenshinWindow() {
     EnumWindows(EnumWindowsFunc, (LPARAM) (&gwi));
-    genshinWindow = gwi.hwnd;
 
     WCHAR buff[1024]{};
-    GetWindowText(genshinWindow, buff, 100);
+    GetWindowText(gwi.hwnd, buff, 100);
     if (!lstrcmp(buff, gwi.windowName.c_str())) {
         if (gwi.hwnd && !gwi.active) {
             DWORD processId;
@@ -101,9 +99,9 @@ void FindGenshinWindow() {
 
 void GetFrame(int screenWidth, int screenHeight) {
     RECT clientRect;
-    GetClientRect(genshinWindow, &clientRect);
+    GetClientRect(gwi.hwnd, &clientRect);
     RECT windowRect;
-    GetWindowRect(genshinWindow, &windowRect);
+    GetWindowRect(gwi.hwnd, &windowRect);
     int borderSize = ((windowRect.right - windowRect.left) - (clientRect.right - clientRect.left)) / 2;
     int titleBarSize = ((windowRect.bottom - windowRect.top) - (clientRect.bottom - clientRect.top)) - borderSize;
     screenHeight += titleBarSize;
@@ -128,7 +126,7 @@ void GetFrame(int screenWidth, int screenHeight) {
     bi.biClrUsed = 0;
     bi.biClrImportant = 0;
 
-    auto hwndDC = GetWindowDC(genshinWindow);
+    auto hwndDC = GetWindowDC(gwi.hwnd);
     auto saveDC = CreateCompatibleDC(hwndDC);
 
     auto bitMap = CreateCompatibleBitmap(hwndDC, screenWidth, screenHeight);
@@ -139,20 +137,19 @@ void GetFrame(int screenWidth, int screenHeight) {
             BitBlt(saveDC, 0, 0, screenWidth, screenHeight, hwndDC, 0, 0, SRCCOPY);
             break;
         case 1:
-            PrintWindow(genshinWindow, saveDC, PW_RENDERFULLCONTENT);
+            PrintWindow(gwi.hwnd, saveDC, PW_RENDERFULLCONTENT);
             break;
         default:
             std::cout << "Invalid capture mode, reverting to default." << std::endl;
             gwi.captureMode = 1;
-            PrintWindow(genshinWindow, saveDC, PW_RENDERFULLCONTENT);
+            PrintWindow(gwi.hwnd, saveDC, PW_RENDERFULLCONTENT);
             break;
     }
     GetDIBits(saveDC, bitMap, 0, screenHeight - titleBarSize, frame.data(), (BITMAPINFO *) &bi, DIB_RGB_COLORS);
 
     DeleteObject(bitMap);
     DeleteDC(saveDC);
-    DeleteObject(hwndDC);
-    ReleaseDC(genshinWindow, hwndDC);
+    ReleaseDC(gwi.hwnd, hwndDC);
 }
 
 

@@ -8,6 +8,7 @@ int InitTesseract(const char *dataPath, const char *language) {
     tesseractApi = new tesseract::TessBaseAPI();
     if (tesseractApi->Init(dataPath, language)) {
         std::cout << "Could not initialize tesseract lib." << std::endl;
+        delete tesseractApi;
         return 1;
     }
     tesseractApi->SetVariable("load_system_dawg", "0");
@@ -56,7 +57,7 @@ std::string GetTextFromImage(const Image &image) {
     tesseractApi->Clear();
     tesseractApi->ClearAdaptiveClassifier();
     auto result = StripText(tesseractOutText);
-    delete tesseractOutText;
+    delete[] tesseractOutText;
     return result;
 }
 
@@ -71,7 +72,7 @@ unsigned int LevenshteinDistance(const std::string &s1, const std::string &s2) {
 
     for (unsigned int i = 1; i <= len1; ++i)
         for (unsigned int j = 1; j <= len2; ++j)
-            d[i][j] = min(min(d[i - 1][j] + 1, d[i][j - 1] + 1),
+            d[i][j] = std::min(std::min(d[i - 1][j] + 1, d[i][j - 1] + 1),
                           d[i - 1][j - 1] + (s1[i - 1] == s2[j - 1] ? 0 : 1));
     return d[len1][len2];
 }
