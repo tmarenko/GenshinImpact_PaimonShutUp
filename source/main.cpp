@@ -1,9 +1,7 @@
 #include "image.h"
 #include "windows.h"
 #include <iostream>
-#include "audioclient.h"
-#include "audiopolicy.h"
-#include "mmdeviceapi.h"
+#include "audio_session.h"
 #include "psapi.h"
 #include <csignal>
 #include "tesseract.h"
@@ -23,6 +21,7 @@ typedef struct GenshinWindowInfo {
     int height = 0;
     bool active = false;
     DWORD processId = 0;
+    AudioSession audioSession;
 } GenshinWindowInfo;
 
 volatile sig_atomic_t stop;
@@ -83,6 +82,9 @@ void FindGenshinWindow() {
             GetWindowThreadProcessId(gwi.hwnd, &processId);
             gwi.processId = processId;
             gwi.active = true;
+            if (gwi.audioSession.initialize() && gwi.audioSession.findProcessSession(gwi.processId)) {
+                std::cout << "Audio session initialized." << std::endl;
+            }
             std::cout << "Ready for Paimon!" << std::endl;
         }
     } else {
@@ -90,7 +92,8 @@ void FindGenshinWindow() {
             gwi.active = false;
             gwi.hwnd = nullptr;
             gwi.processId = 0;
-            std::cout << "Game was closed" << std::endl;
+            gwi.audioSession.cleanup();
+            std::cout << "Game was closed." << std::endl;
         }
     }
 }
@@ -195,59 +198,16 @@ bool IsPaimonSpeaking(const std::string &paimonName) {
 }
 
 
-HRESULT SetMuteGenshin(BOOL bMute) {
-    IMMDeviceEnumerator *m_pEnumerator;
-    IMMDevice *pDevice;
-    CoInitialize(NULL);
-
-    HRESULT hr = E_FAIL;
-    hr = CoCreateInstance(__uuidof(MMDeviceEnumerator), NULL, CLSCTX_ALL, __uuidof(IMMDeviceEnumerator), (void **) &m_pEnumerator);
-
-    if (FAILED(hr))
-        return hr;
-
-    hr = m_pEnumerator->GetDefaultAudioEndpoint(eRender, eConsole, &pDevice);
-    m_pEnumerator->Release();
-    if (FAILED(hr))
-        return hr;
-
-    IAudioSessionManager2 *pasm = NULL;
-    hr = pDevice->Activate(__uuidof(IAudioSessionManager2), CLSCTX_ALL, NULL, (void **) &pasm);
-    pDevice->Release();
-    if (FAILED(hr))
-        return hr;
-
-    IAudioSessionEnumerator *audio_session_enumerator;
-    if (SUCCEEDED(pasm->GetSessionEnumerator(&audio_session_enumerator))) {
-        int count;
-        if (SUCCEEDED(audio_session_enumerator->GetCount(&count))) {
-            for (int i = 0; i < count; i++) {
-                IAudioSessionControl *audio_session_control;
-                IAudioSessionControl2 *audio_session_control2;
-
-                if (SUCCEEDED(audio_session_enumerator->GetSession(i, &audio_session_control))) {
-                    if (SUCCEEDED(audio_session_control->QueryInterface(__uuidof(IAudioSessionControl2), (void **) &audio_session_control2))) {
-                        DWORD processId;
-                        if (SUCCEEDED(audio_session_control2->GetProcessId(&processId))) {
-                            if (processId == gwi.processId) {
-                                ISimpleAudioVolume *pSAV;
-                                hr = audio_session_control2->QueryInterface(__uuidof(ISimpleAudioVolume), (void **) &pSAV);
-                                if (SUCCEEDED(hr)) {
-                                    hr = pSAV->SetMute(bMute, NULL);
-                                    pSAV->Release();
-                                }
-                            }
-                            audio_session_control->Release();
-                            audio_session_control2->Release();
-                        }
-                    }
-                }
-            }
-            audio_session_enumerator->Release();
+void SetMuteGenshin(bool bMute) {
+    if (!gwi.audioSession.isSessionValid()) {
+        if (!(gwi.audioSession.initialize() && gwi.audioSession.findProcessSession(gwi.processId))) {
+            std::cout << "Failed to find Genshin Impact audio session." << std::endl;
+            return;
         }
+        std::cout << "Audio session reinitialized." << std::endl;
     }
-    pasm->Release();
-    return hr;
+
+    gwi.audioSession.setMute(bMute);
 }
 
 

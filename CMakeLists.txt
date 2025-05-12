@@ -35,6 +35,8 @@ add_executable(${PROJECT_NAME}
     source/image.h
     source/config.cpp 
     source/config.h
+    source/audio_session.cpp
+    source/audio_session.h
     appicon.rc)
 set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
