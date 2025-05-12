@@ -239,15 +239,22 @@ int PaimonShutUp() {
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(33));
     }
-    DestroyTesseract();
-    SetMuteGenshin(false);
     return 0;
 }
 
+BOOL WINAPI ExitHandler(DWORD ctrlType) {
+    if (ctrlType == CTRL_CLOSE_EVENT || ctrlType == CTRL_SHUTDOWN_EVENT) {
+        gwi.audioSession.setMute(false);
+        DestroyTesseract();
+        return TRUE;
+    }
+    return FALSE;
+}
 
 int main() {
     try {
         signal(SIGINT, keyHand);
+        SetConsoleCtrlHandler(ExitHandler, TRUE);
         SetPriorityClass(GetCurrentProcess(), BELOW_NORMAL_PRIORITY_CLASS);
         return PaimonShutUp();
     }
