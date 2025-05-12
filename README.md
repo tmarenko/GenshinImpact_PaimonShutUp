@@ -26,7 +26,7 @@ It doesn't change any game files or interfere with how the game runs, so it does
 
 ## Configuration
 
-## Edit `settings.cfg` file:
+### Edit `settings.cfg` file:
 
 | Setting | Description |
 |---------|-------------|
