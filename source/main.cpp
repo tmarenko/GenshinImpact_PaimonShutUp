@@ -1,5 +1,4 @@
-#include "opencv2/core.hpp"
-#include "opencv2/imgproc.hpp"
+#include "image.h"
 #include "windows.h"
 #include <iostream>
 #include "audioclient.h"
@@ -32,17 +31,21 @@ void keyHand(int signum) {
 }
 
 
-std::map<std::string, cv::Scalar> dialoguePositions = {
+struct DialoguePosition {
+    double x1, y1, x2, y2;
+};
+
+std::map<std::string, DialoguePosition> dialoguePositions = {
         {"16:9_DEFAULT",    {0.463, 0.787, 0.537, 0.829}},
         {"16:9_OVERWORLD",  {0.465, 0.758, 0.533, 0.802}},
         {"16:10_DEFAULT",   {0.461, 0.809, 0.538, 0.841}},
         {"16:10_OVERWORLD", {0.462, 0.780, 0.538, 0.815}},
 };
 
-const cv::Scalar DIALOGUE_NAME_COLOR_RANGE_LOW = {0, 170, 230};   // BGR
-const cv::Scalar DIALOGUE_NAME_COLOR_RANGE_HIGH = {10, 210, 255}; // BGR
+const Color DIALOGUE_NAME_COLOR_RANGE_LOW(230, 170, 0);   // RGB
+const Color DIALOGUE_NAME_COLOR_RANGE_HIGH(255, 210, 10); // RGB
 
-cv::Mat frame;
+Image frame;
 HWND genshinWindow;
 GenshinWindowInfo gwi;
 std::wstring genshinExe = L"GenshinImpact.exe";
@@ -99,7 +102,10 @@ void GetFrame(int screenWidth, int screenHeight) {
 
     if (screenHeight <= 0 || screenWidth <= 0)
         return;
-    frame.create(screenHeight, screenWidth, CV_8UC4);
+
+    if (frame.height() != screenHeight || frame.width() != screenWidth || frame.channels() != 4) {
+        frame.create(screenHeight, screenWidth, 4);
+    }
 
     BITMAPINFOHEADER bi;
     bi.biSize = sizeof(BITMAPINFOHEADER);    //http://msdn.microsoft.com/en-us/library/windows/window/dd183402%28v=vs.85%29.aspx
@@ -133,36 +139,37 @@ void GetFrame(int screenWidth, int screenHeight) {
             PrintWindow(genshinWindow, saveDC, PW_RENDERFULLCONTENT);
             break;
     }
-    GetDIBits(saveDC, bitMap, 0, screenHeight - titleBarSize, frame.data, (BITMAPINFO *) &bi, DIB_RGB_COLORS);
+    GetDIBits(saveDC, bitMap, 0, screenHeight - titleBarSize, frame.data(), (BITMAPINFO *) &bi, DIB_RGB_COLORS);
 
     DeleteObject(bitMap);
     DeleteDC(saveDC);
     DeleteObject(hwndDC);
     ReleaseDC(genshinWindow, hwndDC);
-    cv::cvtColor(frame, frame, cv::COLOR_RGBA2RGB);
 }
 
 
-std::string GetTextFromImageByRect(const cv::Mat &image, const cv::Rect& rect) {
+std::string GetTextFromImageByRect(const Image &image, const Rect &rect) {
     if (image.empty())
         return std::string();
-    cv::Mat croppedImage = image(rect);
-    cv::inRange(croppedImage, DIALOGUE_NAME_COLOR_RANGE_LOW, DIALOGUE_NAME_COLOR_RANGE_HIGH, croppedImage);
-    return GetTextFromImage(croppedImage);
+    Image thresholdImage;
+    Image::cropAndThreshold(image, rect, DIALOGUE_NAME_COLOR_RANGE_LOW, DIALOGUE_NAME_COLOR_RANGE_HIGH, thresholdImage);
+    return GetTextFromImage(thresholdImage);
 }
 
 
-cv::Rect GetDialogueRect(const cv::Size &windowSize, const std::string &type) {
+Rect GetDialogueRect(const Size &windowSize, const std::string &type) {
     double aspectRatio = static_cast<double>(windowSize.width) / windowSize.height;
-    cv::Scalar dialoguePosition = dialoguePositions["16:9_" + type];
+    auto dialoguePosition = dialoguePositions["16:9_" + type];
 
     if (std::abs(aspectRatio - 16.0 / 10.0) < 0.01) {
         dialoguePosition = dialoguePositions["16:10_" + type];
     }
-    return {(int) (dialoguePosition.val[0] * windowSize.width),
-            (int) (dialoguePosition.val[1] * windowSize.height),
-            (int) (dialoguePosition.val[2] * windowSize.width) - (int) (dialoguePosition.val[0] * windowSize.width),
-            (int) (dialoguePosition.val[3] * windowSize.height) - (int) (dialoguePosition.val[1] * windowSize.height)};
+    return Rect(
+            (int) (dialoguePosition.x1 * windowSize.width),
+            (int) (dialoguePosition.y1 * windowSize.height),
+            (int) (dialoguePosition.x2 * windowSize.width) - (int) (dialoguePosition.x1 * windowSize.width),
+            (int) (dialoguePosition.y2 * windowSize.height) - (int) (dialoguePosition.y1 * windowSize.height)
+    );
 }
 
 bool IsPaimonSpeaking(const std::string &paimonName) {
@@ -170,11 +177,11 @@ bool IsPaimonSpeaking(const std::string &paimonName) {
     if (frame.empty())
         return false;
 
-    cv::Rect defaultDialoguePos = GetDialogueRect(frame.size(), "DEFAULT");
+    Rect defaultDialoguePos = GetDialogueRect(frame.size(), "DEFAULT");
     std::string defaultDialogue = GetTextFromImageByRect(frame, defaultDialoguePos);
 
-    if (gwi.muteOverworld){
-        cv::Rect overworldDialoguePos = GetDialogueRect(frame.size(), "OVERWORLD");
+    if (gwi.muteOverworld) {
+        Rect overworldDialoguePos = GetDialogueRect(frame.size(), "OVERWORLD");
         std::string overworldDialogue = GetTextFromImageByRect(frame, overworldDialoguePos);
         return IsStringsSimilar(defaultDialogue, paimonName, gwi.maxOcrErrors) ||
                IsStringsSimilar(overworldDialogue, paimonName, gwi.maxOcrErrors);

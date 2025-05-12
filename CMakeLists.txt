@@ -17,24 +17,29 @@ if(NOT TESSERACT_LANGUAGE)
     set(TESSERACT_LANGUAGE "eng")
 endif()
 
-set(OpenCV_STATIC ON)
 set(Leptonica_STATIC ON)
 set(Tesseract_STATIC ON)
 
-find_package(OpenCV 4.2.0 COMPONENTS core imgproc REQUIRED)
 find_package(Leptonica 1.74 REQUIRED)
 find_package(Tesseract 3.05 REQUIRED)
 
-MESSAGE(STATUS "Include dirs ${OpenCV_INCLUDE_DIRS} ${Leptonica_INCLUDE_DIRS} ${Tesseract_INCLUDE_DIRS}")
-include_directories(${OpenCV_INCLUDE_DIRS})
+MESSAGE(STATUS "Include dirs ${Leptonica_INCLUDE_DIRS} ${Tesseract_INCLUDE_DIRS}")  
 include_directories(${Leptonica_INCLUDE_DIRS})
 include_directories(${Tesseract_INCLUDE_DIRS})
 
-add_executable(${PROJECT_NAME} source/main.cpp source/tesseract.cpp source/tesseract.h appicon.rc source/config.cpp source/config.h)
+add_executable(${PROJECT_NAME} 
+    source/main.cpp 
+    source/tesseract.cpp 
+    source/tesseract.h 
+    source/image.cpp 
+    source/image.h
+    source/config.cpp 
+    source/config.h
+    appicon.rc)
 set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
-MESSAGE(STATUS "LINK LIBRARIES ${OpenCV_LIBS} ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
-target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS} ${Leptonica_LIBRARIES} libtesseract)
+MESSAGE(STATUS "LINK LIBRARIES ${Leptonica_LIBRARIES} ${Tesseract_LIBRARIES}")
+target_link_libraries(${PROJECT_NAME} ${Leptonica_LIBRARIES} libtesseract)
 
 if (NOT EXISTS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/tessdata/${TESSERACT_LANGUAGE}.traineddata")
     set(TESSERACT_LANG_DATA "https://github.com/tesseract-ocr/tessdata/raw/3.04.00/${TESSERACT_LANGUAGE}.traineddata")

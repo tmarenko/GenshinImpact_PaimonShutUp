@@ -5,14 +5,12 @@ on: [workflow_dispatch]
 
 env:
   BUILD_TYPE: Release
-  OPENCV_VERSION: 4.2.0
   LEPTONICA_VERSION: 1.74.3
   TESSERACT_VERSION: 3.05.02
   TESSERACT_LANGUAGE: eng
   REPO_NAME: ${{ github.event.repository.name }}
   LEPTONICA_BUILD: ${{github.workspace}}/leptonica/build
   TESSERACT_BUILD: ${{github.workspace}}/tesseract/build
-  OPENCV_BUILD: ${{github.workspace}}/opencv/build
 
 jobs:
 
@@ -31,12 +29,6 @@ jobs:
           repository: tesseract-ocr/tesseract
           ref: ${{env.TESSERACT_VERSION}}
           path: tesseract
-
-      - uses: actions/checkout@v3
-        with:
-          repository: opencv/opencv
-          ref: ${{env.OPENCV_VERSION}}
-          path: opencv
 
       - uses: actions/checkout@v3
         with:
@@ -86,55 +78,12 @@ jobs:
             -DSTATIC=1
           cmake --build ${{env.TESSERACT_BUILD}} --config ${{env.BUILD_TYPE}} --target install
 
-      - name: Build OpenCV ${{env.OPENCV_VERSION}}
-        run: |
-          cd ${{github.workspace}}/opencv
-          cmake -B ${{env.OPENCV_BUILD}} -G "NMake Makefiles" `
-            -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
-            -DCMAKE_INSTALL_PREFIX=${{env.OPENCV_BUILD}} `
-            -DBUILD_LIST="core,imgproc" `
-            -DBUILD_opencv_apps=OFF `
-            -DBUILD_opencv_calib3d=OFF `
-            -DBUILD_opencv_dnn=OFF `
-            -DBUILD_opencv_features2d=OFF `
-            -DBUILD_opencv_flann=OFF `
-            -DBUILD_opencv_gapi=OFF `
-            -DBUILD_opencv_highgui=OFF `
-            -DBUILD_opencv_imgcodecs=OFF `
-            -DBUILD_opencv_ml=OFF `
-            -DBUILD_opencv_objdetect=OFF `
-            -DBUILD_opencv_photo=OFF `
-            -DBUILD_opencv_stitching=OFF `
-            -DBUILD_opencv_video=OFF `
-            -DBUILD_opencv_videoio=OFF `
-            -DBUILD_opencv_world=OFF `
-            -DWITH_FFMPEG=OFF `
-            -DWITH_GSTREAMER=OFF `
-            -DWITH_QT=OFF `
-            -DWITH_OPENEXR=OFF `
-            -DWITH_IPP=OFF `
-            -DWITH_TBB=OFF `
-            -DWITH_EIGEN=OFF `
-            -DWITH_PROTOBUF=OFF `
-            -DWITH_LAPACK=OFF `
-            -DWITH_1394=OFF `
-            -DWITH_VTK=OFF `
-            -DWITH_CUDA=OFF `
-            -DWITH_CUFFT=OFF `
-            -DWITH_NVCUVID=OFF `
-            -DWITH_OPENGL=OFF `
-            -DWITH_VULKAN=OFF `
-            -DWITH_DSHOW=OFF `
-            -DBUILD_SHARED_LIBS=OFF `
-            -DSTATIC=1
-          cmake --build ${{env.OPENCV_BUILD}} --config ${{env.BUILD_TYPE}} --target install
-
       - name: Build ${{env.REPO_NAME}}
         run: |
           cd ${{github.workspace}}/${{env.REPO_NAME}}
           cmake -B ${{github.workspace}}/${{env.REPO_NAME}}/build -G "NMake Makefiles" `
             -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} `
-            -DCMAKE_PREFIX_PATH="${{env.LEPTONICA_BUILD}};${{env.TESSERACT_BUILD}};${{env.OPENCV_BUILD}}" `
+            -DCMAKE_PREFIX_PATH="${{env.LEPTONICA_BUILD}};${{env.TESSERACT_BUILD}}" `
             -DTESSERACT_LANGUAGE=${{env.TESSERACT_LANGUAGE}}
           cmake --build ${{github.workspace}}/${{env.REPO_NAME}}/build --config ${{env.BUILD_TYPE}}
 

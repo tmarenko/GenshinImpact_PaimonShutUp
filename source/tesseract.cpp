@@ -44,14 +44,14 @@ std::string StripText(const std::string &input) {
 }
 
 
-std::string GetTextFromImage(const cv::Mat &image) {
+std::string GetTextFromImage(const Image &image) {
     if (!tesseractApi) {
         std::cout << "Tesseract lib isn't initialized." << std::endl;
         return std::string();
     }
     char *tesseractOutText;
     tesseractApi->SetVariable("tessedit_pageseg_mode", AUTOMATIC_PAGE_SEGMENTATION);
-    tesseractApi->SetImage(image.data, image.cols, image.rows, image.channels(), image.cols * image.channels());
+    tesseractApi->SetImage(image.data(), image.width(), image.height(), image.channels(), image.width() * image.channels());
     tesseractOutText = tesseractApi->GetUTF8Text();
     tesseractApi->Clear();
     tesseractApi->ClearAdaptiveClassifier();

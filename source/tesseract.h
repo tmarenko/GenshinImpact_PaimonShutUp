@@ -4,8 +4,10 @@
 #include <iostream>
 #include <baseapi.h>
 #include <allheaders.h>
-#include "opencv2/core.hpp"
+#include "image.h"
 #include <urlmon.h>
+#include <algorithm>
+#include <string>
 
 #pragma comment(lib, "urlmon.lib")
 
@@ -20,7 +22,7 @@ void DestroyTesseract();
 
 std::string StripText(const std::string &input);
 
-std::string GetTextFromImage(const cv::Mat &image);
+std::string GetTextFromImage(const Image &image);
 
 unsigned int LevenshteinDistance(const std::string &s1, const std::string &s2);
 
