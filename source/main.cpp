@@ -22,6 +22,7 @@ typedef struct GenshinWindowInfo {
     int width = 0;
     int height = 0;
     bool active = false;
+    DWORD processId = 0;
 } GenshinWindowInfo;
 
 volatile sig_atomic_t stop;
@@ -78,6 +79,9 @@ void FindGenshinWindow() {
     GetWindowText(genshinWindow, buff, 100);
     if (!lstrcmp(buff, gwi.windowName.c_str())) {
         if (gwi.hwnd && !gwi.active) {
+            DWORD processId;
+            GetWindowThreadProcessId(gwi.hwnd, &processId);
+            gwi.processId = processId;
             gwi.active = true;
             std::cout << "Ready for Paimon!" << std::endl;
         }
@@ -85,6 +89,7 @@ void FindGenshinWindow() {
         if (gwi.active) {
             gwi.active = false;
             gwi.hwnd = nullptr;
+            gwi.processId = 0;
             std::cout << "Game was closed" << std::endl;
         }
     }
@@ -190,18 +195,6 @@ bool IsPaimonSpeaking(const std::string &paimonName) {
 }
 
 
-bool IsGenshinProcess(DWORD pid) {
-    WCHAR buff[1024];
-    HANDLE handle = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, pid);
-    if (GetProcessImageFileName(handle, buff, sizeof(buff))) {
-        CloseHandle(handle);
-        return std::wstring(&buff[0]).find(genshinExe) != std::wstring::npos;
-    }
-    CloseHandle(handle);
-    return false;
-}
-
-
 HRESULT SetMuteGenshin(BOOL bMute) {
     IMMDeviceEnumerator *m_pEnumerator;
     IMMDevice *pDevice;
@@ -236,7 +229,7 @@ HRESULT SetMuteGenshin(BOOL bMute) {
                     if (SUCCEEDED(audio_session_control->QueryInterface(__uuidof(IAudioSessionControl2), (void **) &audio_session_control2))) {
                         DWORD processId;
                         if (SUCCEEDED(audio_session_control2->GetProcessId(&processId))) {
-                            if (IsGenshinProcess(processId)) {
+                            if (processId == gwi.processId) {
                                 ISimpleAudioVolume *pSAV;
                                 hr = audio_session_control2->QueryInterface(__uuidof(ISimpleAudioVolume), (void **) &pSAV);
                                 if (SUCCEEDED(hr)) {
